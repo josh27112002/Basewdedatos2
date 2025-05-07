@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Clientes</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='ventas.css') }}">
+</head>
+<body>
+    <h1>Lista de Clientes</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>ID Cliente</th>
+                <th>Nombre</th>
+                <th>Municipio</th>
+                <th>Departamento</th>
+                <th>Dirección</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for cliente in clientes %}
+            <tr>
+                <td>{{ cliente.ID_CLIENTE }}</td>
+                <td>{{ cliente.NOMBRE }}</td>
+                <td>{{ cliente.MUNICIPIO }}</td>
+                <td>{{ cliente.DEPARTAMENTO }}</td>
+                <td>{{ cliente.DIRECCION }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <a href="{{ url_for('routes.index') }}">← Volver al inicio</a>
+</body>
+</html>

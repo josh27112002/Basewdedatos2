@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Inicio - Sistema de Rutas</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <!-- Menú lateral izquierdo -->
+        <aside class="sidebar">
+            <h2>Menú</h2>
+            <ul>
+                <li><a href="/ventas">Ventas</a></li>
+                <li><a href="/rutas">Rutas</a></li>
+                <li><a href="/vendedores">Vendedores</a></li>
+                <li><a href="/clientes">Clientes</a></li>
+                <li><a href="/reportes">Reportes</a></li>
+            </ul>
+        </aside>
+
+        <!-- Contenido central -->
+        <main class="main-content">
+            <h1>Bienvenido al Sistema de Rutas y Ventas</h1>
+            <p>Aquí podrás gestionar la información de ventas, clientes, rutas y más.</p>
+            <div class="info-box">
+                <h3>Instrucciones</h3>
+                <p>Selecciona una opción del menú para empezar a visualizar o gestionar los datos registrados en la base de datos.</p>
+            </div>
+        </main>
+    </div>
+</body>
+</html>
