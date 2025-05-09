@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Bienvenido</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='index2.css') }}">
+</head>
+<body>
+    <!-- Video de fondo -->
+    <video autoplay muted loop id="video-fondo">
+        <source src="{{ url_for('static', filename='fondo1.mp4') }}" type="video/mp4">
+        Tu navegador no soporta video HTML5.
+    </video>
+
+    <!-- Contenido encima del video -->
+    <div class="container">
+        <h1>Bienvenido al Sistema de Ventas Ninoshka</h1>
+        <a href="{{ url_for('login') }}"><button>Iniciar Sesión</button></a>
+        <a href="{{ url_for('registro') }}"><button>Registrarse</button></a>
+    </div>
+</body>
+</html>

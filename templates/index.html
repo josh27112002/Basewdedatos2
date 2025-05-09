@@ -2,31 +2,42 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Inicio - Sistema de Rutas</title>
+    <title>Dashboard - Sistema de Rutas</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <div class="container">
+    <div class="dashboard-container">
         <!-- Menú lateral izquierdo -->
         <aside class="sidebar">
-            <h2>Menú</h2>
-            <ul>
-                <li><a href="/ventas">Ventas</a></li>
-                <li><a href="/rutas">Rutas</a></li>
-                <li><a href="/vendedores">Vendedores</a></li>
-                <li><a href="/clientes">Clientes</a></li>
-                <li><a href="/reportes">Reportes</a></li>
-            </ul>
+            <div class="user-info">
+                <h3>{{ session['nombre_usuario'] }}</h3>
+                <p>{{ session['rol'] }}</p>
+            </div>
+            <nav class="menu">
+                <ul>
+                    <li><a href="/ventas">Ventas</a></li>
+                    <li><a href="/rutas">Rutas</a></li>
+                    <li><a href="/vendedores">Vendedores</a></li>
+                    <li><a href="/clientes">Clientes</a></li>
+                    <li><a href="/reportes">Reportes</a></li>
+                </ul>
+            </nav>
+            <form action="/logout" method="POST">
+                <button class="logout-btn" type="submit">Cerrar sesión</button>
+            </form>
         </aside>
 
         <!-- Contenido central -->
         <main class="main-content">
-            <h1>Bienvenido al Sistema de Rutas y Ventas</h1>
-            <p>Aquí podrás gestionar la información de ventas, clientes, rutas y más.</p>
-            <div class="info-box">
+            <header class="dashboard-header">
+                <h1>Bienvenido al Sistema de Rutas y Ventas</h1>
+                <p>Gestiona tus datos de forma eficiente y segura.</p>
+            </header>
+
+            <section class="info-box">
                 <h3>Instrucciones</h3>
-                <p>Selecciona una opción del menú para empezar a visualizar o gestionar los datos registrados en la base de datos.</p>
-            </div>
+                <p>Utiliza el menú de la izquierda para acceder a cada módulo.</p>
+            </section>
         </main>
     </div>
 </body>

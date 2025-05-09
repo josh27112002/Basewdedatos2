@@ -1,57 +1,123 @@
 body {
-  font-family: Arial, sans-serif;
+  font-family: 'Segoe UI', sans-serif;
   margin: 0;
-  background-color: #f7f7f7;
+  background-color: #f0f2f5;
 }
 
-.container {
+.dashboard-container {
   display: flex;
   height: 100vh;
 }
 
+/* Sidebar izquierdo */
 .sidebar {
-  width: 220px;
-  background-color: #003366;
-  color: white;
-  padding: 20px;
+  width: 240px;
+  background-color: #0f1e3e;
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  padding: 30px 20px;
+  justify-content: space-between;
 }
 
-.sidebar h2 {
+.sidebar h2,
+.sidebar p {
+  margin: 0;
+  font-size: 18px;
+}
+
+.sidebar .user-info {
+  margin-bottom: -500px;
   font-size: 20px;
-  margin-bottom: 10px;
 }
 
-.sidebar ul {
-  list-style-type: none;
+.user-info {
+  text-align: left;
+  margin-bottom: 300px;
+}
+
+.user-info h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.user-info p {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: #c3c3c3;
+}
+
+
+.menu ul {
+  list-style: none;
   padding: 0;
+  margin: 0;
 }
 
-.sidebar ul li {
-  margin-bottom: 12px;
+.menu ul li {
+  margin-bottom: 20px;
 }
 
-.sidebar ul li a {
+
+.menu ul li a {
+  display: block;
+  padding: 12px 18px;
   color: white;
+  font-size: 17px;
+  border-radius: 8px;
   text-decoration: none;
+  transition: background-color 0.3s ease;
 }
 
-.sidebar ul li a:hover {
-  text-decoration: underline;
+
+.menu ul li a:hover {
+  background-color: rgba(255, 255, 255, 0.1);
 }
 
+.menu ul li a.active {
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+.logout-btn {
+  align-self: flex-start;
+  margin-top: auto;
+  margin-left: 5px;
+  padding: 10px 20px;
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.logout-btn:hover {
+  background-color: #c0392b;
+}
+
+/* Contenido principal */
 .main-content {
-  flex-grow: 1;
+  flex: 1;
   padding: 40px;
   background-color: #ffffff;
+  overflow-y: auto;
 }
 
-.main-content h1 {
-  margin-bottom: 10px;
+.dashboard-header h1 {
+  margin-top: 0;
+  color: #333333;
+}
+
+.dashboard-header p {
+  margin-top: 5px;
+  color: #666666;
 }
 
 .info-box {
   margin-top: 30px;
-  background-color: #e0f0ff;
-  padding: 15px;
-  border-left: 5px solid #0077cc;
+  background-color: #eaf3ff;
+  padding: 20px;
+  border-left: 5px solid #007bff;
+  border-radius: 5px;
 }
