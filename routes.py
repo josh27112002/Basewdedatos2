@@ -39,3 +39,18 @@ def clientes():
     data = [dict(zip(columns, row)) for row in rows]
     conn.close()
     return render_template('clientes.html', clientes=data)
+
+
+from flask import Blueprint, render_template
+from db_config import get_connection
+
+routes = Blueprint('routes', __name__)
+
+@routes.route('/vendedores')
+def mostrar_vendedores():
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT ID_Vendedor, Nombre, Apellido, Zona_Asignada, Estado FROM Vendedor")
+    vendedores = cursor.fetchall()
+    conn.close()
+    return render_template("vendedores.html", vendedores=vendedores)

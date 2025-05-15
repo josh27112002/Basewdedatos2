@@ -189,11 +189,128 @@ def rutas_page():
 
 @app.route('/vendedores')
 def vendedores_page():
-    return render_template('vendedores.html')
+    page = int(request.args.get('page', 1))
+    per_page = 50
+    offset = (page - 1) * per_page
+
+    filtro = request.args.get('buscar', '').strip().lower()
+    estado = request.args.get('estado', '').strip().lower()
+
+    conn = get_connection()
+    cur = conn.cursor()
+
+    condiciones = []
+    valores = {'offset': offset, 'limit': per_page}
+
+    # Filtro de texto libre
+    if filtro:
+        palabras = filtro.split()
+        for i, palabra in enumerate(palabras):
+            clave = f'p{i}'
+            condiciones.append(
+                f"(LOWER(Nombre) LIKE :{clave} OR LOWER(Apellido) LIKE :{clave} OR LOWER(Zona_Asignada) LIKE :{clave})"
+            )
+            valores[clave] = f"%{palabra}%"
+
+    # Filtro por estado
+    if estado in ['activo', 'inactivo']:
+        condiciones.append("LOWER(Estado) = :estado")
+        valores['estado'] = estado
+
+    where_sql = " AND ".join(condiciones)
+    if where_sql:
+        where_sql = "WHERE " + where_sql
+
+    # Consulta paginada
+    cur.execute(f"""
+        SELECT ID_Vendedor, Nombre, Apellido, Zona_Asignada, Estado
+        FROM Vendedor
+        {where_sql}
+        ORDER BY ID_Vendedor
+        OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY
+    """, valores)
+    vendedores = cur.fetchall()
+
+    # Conteo total
+    filtros_solo = {k: v for k, v in valores.items() if k not in ['offset', 'limit']}
+    cur2 = conn.cursor()
+    cur2.execute(f"""
+        SELECT COUNT(*) FROM Vendedor
+        {where_sql}
+    """, filtros_solo)
+    total = cur2.fetchone()[0]
+    cur2.close()
+    conn.close()
+
+    total_pages = (total + per_page - 1) // per_page if total > 0 else 1
+
+    return render_template (
+        'vendedores.html',
+        vendedores=vendedores,
+        page=page,
+        total_pages=total_pages,
+        filtro=filtro,
+        estado=estado,
+        total=total  
+    )
 
 @app.route('/clientes')
 def clientes_page():
-    return render_template('clientes.html')
+    page = int(request.args.get('page', 1))
+    per_page = 50
+    offset = (page - 1) * per_page
+
+    filtro = request.args.get('buscar', '').strip().lower()
+
+    conn = get_connection()
+    cur = conn.cursor()
+
+    condiciones = []
+    valores = {'offset': offset, 'limit': per_page}
+
+    if filtro:
+        palabras = filtro.split()
+        for i, palabra in enumerate(palabras):
+            clave = f'p{i}'
+            condiciones.append(
+                f"(LOWER(Nombre) LIKE :{clave} OR LOWER(Municipio) LIKE :{clave} OR LOWER(Departamento) LIKE :{clave})"
+            )
+            valores[clave] = f"%{palabra}%"
+
+    where_sql = " AND ".join(condiciones)
+    if where_sql:
+        where_sql = "WHERE " + where_sql
+
+    cur.execute(f"""
+        SELECT ID_Cliente, Nombre, Direccion, Municipio, Departamento
+        FROM Cliente
+        {where_sql}
+        ORDER BY ID_Cliente
+        OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY
+    """, valores)
+    clientes = cur.fetchall()
+
+    filtros_solo = {k: v for k, v in valores.items() if k not in ['offset', 'limit']}
+    cur2 = conn.cursor()
+    cur2.execute(f"""
+        SELECT COUNT(*) FROM Cliente
+        {where_sql}
+    """, filtros_solo)
+    total = cur2.fetchone()[0]
+    cur2.close()
+    conn.close()
+
+    total_pages = (total + per_page - 1) // per_page if total > 0 else 1
+
+    return render_template(
+        'clientes.html',
+        clientes=clientes,
+        page=page,
+        total_pages=total_pages,
+        filtro=filtro,
+        total=total
+    )
+
 
 @app.route('/reportes')
 def reportes_page():
@@ -207,6 +324,62 @@ def logout():
     flash("Sesión cerrada correctamente.", "info")
     return redirect(url_for('login'))  # Redirige al index2.html (pantalla de bienvenida)
 
+@app.route('/paquetes')
+def paquetes_page():
+    page = int(request.args.get('page', 1))
+    per_page = 50
+    offset = (page - 1) * per_page
+
+    filtro = request.args.get('buscar', '').strip().lower()
+
+    conn = get_connection()
+    cur = conn.cursor()
+
+    condiciones = []
+    valores = {'offset': offset, 'limit': per_page}
+
+    if filtro:
+        palabras = filtro.split()
+        for i, palabra in enumerate(palabras):
+            clave = f'p{i}'
+            condiciones.append(
+                f"(LOWER(Nombre) LIKE :{clave} OR LOWER(Descripcion) LIKE :{clave})"
+            )
+            valores[clave] = f"%{palabra}%"
+
+    where_sql = " AND ".join(condiciones)
+    if where_sql:
+        where_sql = "WHERE " + where_sql
+
+    cur.execute(f"""
+        SELECT ID_Paquete, Nombre, Velocidad_MBPS, Precio, Descripcion
+        FROM PaqueteInternet
+        {where_sql}
+        ORDER BY ID_Paquete
+        OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY
+    """, valores)
+    paquetes = cur.fetchall()
+
+    filtros_solo = {k: v for k, v in valores.items() if k not in ['offset', 'limit']}
+    cur2 = conn.cursor()
+    cur2.execute(f"""
+        SELECT COUNT(*) FROM PaqueteInternet
+        {where_sql}
+    """, filtros_solo)
+    total = cur2.fetchone()[0]
+    cur2.close()
+    conn.close()
+
+    total_pages = (total + per_page - 1) // per_page if total > 0 else 1
+
+    return render_template(
+        'paquetes.html',
+        paquetes=paquetes,
+        page=page,
+        total_pages=total_pages,
+        filtro=filtro,
+        total=total
+    )
 
 
 if __name__ == '__main__':

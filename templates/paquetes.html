@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Clientes - Sistema de Rutas</title>
+    <title>Paquetes de Internet</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <style>
         table {
@@ -53,12 +53,12 @@
                 <p>{{ session['rol'] }}</p>
             </div>
             <nav class="menu">
-    <ul>
+                <ul>
         <li><a href="/ventas">Ventas</a></li>
         <li><a href="/rutas">Rutas</a></li>
         <li><a href="/vendedores">Vendedores</a></li>
         <li><a href="/clientes">Clientes</a></li>
-        <li><a href="/paquetes" {% if request.path == '/paquetes' %}class="active"{% endif %}>Paquetes</a></li>
+        <li><a href="/paquetes" {% if request.path  =='/paquetes' %}class="active"{% endif %}>Paquetes</a></li>
         <li><a href="/reportes">Reportes</a></li>
     </ul>
             </nav>
@@ -70,15 +70,15 @@
         <!-- Contenido -->
         <main class="main-content">
             <header class="dashboard-header">
-                <h1>Listado de Clientes</h1>
-                <p>Busca por nombre, municipio o departamento.</p>
+                <h1>Paquetes de Internet</h1>
+                <p>Consulta y busca los paquetes disponibles.</p>
                 <p style="text-align: center; font-weight: bold;">Resultados encontrados: {{ total }}</p>
             </header>
 
             <!-- Buscador -->
             <div class="search-bar">
-                <form method="get" action="{{ url_for('clientes_page') }}">
-                    <input type="text" name="buscar" value="{{ filtro }}" placeholder="Buscar clientes">
+                <form method="get" action="{{ url_for('paquetes_page') }}">
+                    <input type="text" name="buscar" value="{{ filtro }}" placeholder="Buscar por nombre o descripción">
                     <button type="submit">Buscar</button>
                 </form>
             </div>
@@ -89,19 +89,19 @@
                     <tr>
                         <th>ID</th>
                         <th>Nombre</th>
-                        <th>Dirección</th>
-                        <th>Municipio</th>
-                        <th>Departamento</th>
+                        <th>Velocidad (Mbps)</th>
+                        <th>Precio (Q)</th>
+                        <th>Descripción</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for c in clientes %}
+                    {% for p in paquetes %}
                     <tr>
-                        <td>{{ c[0] }}</td>
-                        <td>{{ c[1] }}</td>
-                        <td>{{ c[2] }}</td>
-                        <td>{{ c[3] }}</td>
-                        <td>{{ c[4] }}</td>
+                        <td>{{ p[0] }}</td>
+                        <td>{{ p[1] }}</td>
+                        <td>{{ p[2] }}</td>
+                        <td>{{ p[3] }}</td>
+                        <td>{{ p[4] }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -110,11 +110,11 @@
             <!-- Paginación -->
             <div class="pagination">
                 {% if page > 1 %}
-                    <a href="{{ url_for('clientes_page', page=page-1, buscar=filtro) }}">← Anterior</a>
+                    <a href="{{ url_for('paquetes_page', page=page-1, buscar=filtro) }}">← Anterior</a>
                 {% endif %}
                 <span>Página {{ page }} de {{ total_pages }}</span>
                 {% if page < total_pages %}
-                    <a href="{{ url_for('clientes_page', page=page+1, buscar=filtro) }}">Siguiente →</a>
+                    <a href="{{ url_for('paquetes_page', page=page+1, buscar=filtro) }}">Siguiente →</a>
                 {% endif %}
             </div>
         </main>
