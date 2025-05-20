@@ -11,9 +11,46 @@ app.secret_key = 'clavesecreta'
 def index2():
     return render_template('index2.html')
 
+# Dashboard y logica para graficos
 @app.route('/dashboard')
 def index():
-    return render_template('index.html')
+    conn = get_connection()
+    cur = conn.cursor()
+
+    # Cantidad de vendedores activos e inactivos
+    cur.execute("""
+        SELECT Estado, COUNT(*) FROM Vendedor
+        GROUP BY Estado
+    """)
+    estado_data = dict(cur.fetchall())
+
+    # Cantidad de vendedores por zona
+    cur.execute("""
+        SELECT Zona_Asignada, COUNT(*) FROM Vendedor
+        GROUP BY Zona_Asignada
+    """)
+    zona_data = cur.fetchall()
+
+    # Top 5 zonas con más vendedores
+    cur.execute("""
+        SELECT Zona_Asignada, COUNT(*) AS total
+        FROM Vendedor
+        GROUP BY Zona_Asignada
+        ORDER BY total DESC
+        FETCH FIRST 5 ROWS ONLY
+    """)
+    top5_zonas = cur.fetchall()
+
+    conn.close()
+
+    return render_template(
+        'index.html',
+        estado_data=estado_data,
+        zona_data=zona_data,
+        top5_zonas=top5_zonas
+    )
+
+
 
 #REGISTRO
 @app.route('/registro', methods=['GET', 'POST'])
@@ -187,6 +224,8 @@ def debug():
 def rutas_page():
     return render_template('rutas.html')
 
+
+#seccion de Vendedores
 @app.route('/vendedores')
 def vendedores_page():
     page = int(request.args.get('page', 1))
@@ -202,57 +241,54 @@ def vendedores_page():
     condiciones = []
     valores = {'offset': offset, 'limit': per_page}
 
-    # Filtro de texto libre
     if filtro:
         palabras = filtro.split()
         for i, palabra in enumerate(palabras):
             clave = f'p{i}'
             condiciones.append(
-                f"(LOWER(Nombre) LIKE :{clave} OR LOWER(Apellido) LIKE :{clave} OR LOWER(Zona_Asignada) LIKE :{clave})"
+                f"(LOWER(NOMBRE) LIKE :{clave} OR LOWER(APELLIDO) LIKE :{clave} OR LOWER(ZONA_ASIGNADA) LIKE :{clave})"
             )
             valores[clave] = f"%{palabra}%"
 
-    # Filtro por estado
     if estado in ['activo', 'inactivo']:
-        condiciones.append("LOWER(Estado) = :estado")
-        valores['estado'] = estado
+        condiciones.append("LOWER(ESTADO) = :estado")
+        valores['ESTADO'] = estado
 
-    where_sql = " AND ".join(condiciones)
-    if where_sql:
-        where_sql = "WHERE " + where_sql
+    where_sql = f"WHERE {' AND '.join(condiciones)}" if condiciones else ""
 
-    # Consulta paginada
-    cur.execute(f"""
-        SELECT ID_Vendedor, Nombre, Apellido, Zona_Asignada, Estado
+    query = f"""
+        SELECT ID_VENDEDOR, NOMBRE, APELLIDO, ZONA_ASIGNADA, ESTADO
         FROM Vendedor
         {where_sql}
-        ORDER BY ID_Vendedor
+        ORDER BY ID_VENDEDOR
         OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY
-    """, valores)
+    """
+
+    cur.execute(query, valores)
     vendedores = cur.fetchall()
 
     # Conteo total
     filtros_solo = {k: v for k, v in valores.items() if k not in ['offset', 'limit']}
     cur2 = conn.cursor()
-    cur2.execute(f"""
-        SELECT COUNT(*) FROM Vendedor
-        {where_sql}
-    """, filtros_solo)
+    cur2.execute(f"SELECT COUNT(*) FROM Vendedor {where_sql}", filtros_solo)
     total = cur2.fetchone()[0]
+
+    cur.close()
     cur2.close()
     conn.close()
 
     total_pages = (total + per_page - 1) // per_page if total > 0 else 1
 
-    return render_template (
+    return render_template(
         'vendedores.html',
         vendedores=vendedores,
         page=page,
         total_pages=total_pages,
         filtro=filtro,
         estado=estado,
-        total=total  
+        total=total
     )
+
 
 @app.route('/clientes')
 def clientes_page():

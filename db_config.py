@@ -1,12 +1,19 @@
 
+
 import oracledb
 
 def get_connection():
-    dsn = oracledb.makedsn("localhost", 1521, sid="xe")  # usamos SID, no service_name
+    # Crear el DSN (Data Source Name)
+    dsn = oracledb.makedsn("DAVID", 1522, service_name="XE")
+
+    # Establecer conexión como SYS con rol SYSDBA
     connection = oracledb.connect(
-        user="system",
-        password="27112002",
-        dsn=dsn
+        user="sys",
+        password="Oracle123",  # contraseña
+        dsn=dsn,
+        mode=oracledb.SYSDBA  #Importante: para conectarte como SYSDBA
     )
     return connection
+
+
 

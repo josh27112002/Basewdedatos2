@@ -1,11 +1,18 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - Sistema de Rutas</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
+
 <body>
+    <button class="menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('active')">
+        ☰ Menú
+    </button>
+
     <div class="dashboard-container">
         <!-- Menú lateral izquierdo -->
         <aside class="sidebar">
@@ -15,10 +22,12 @@
             </div>
             <nav class="menu">
                 <ul>
-                    <li><a href="/ventas">Ventas</a></li>
-                    <li><a href="/rutas">Rutas</a></li>
+                    <li><a href="/dashboard" class="active">Dashboard</a></li>
                     <li><a href="/vendedores">Vendedores</a></li>
                     <li><a href="/clientes">Clientes</a></li>
+                    <li><a href="/paquetes">Paquetes de Internet</a></li>
+                    <li><a href="/ventas">Ventas</a></li>
+                    <li><a href="/rutas">Rutas</a></li>
                     <li><a href="/reportes">Reportes</a></li>
                 </ul>
             </nav>
@@ -34,11 +43,122 @@
                 <p>Gestiona tus datos de forma eficiente y segura.</p>
             </header>
 
-            <section class="info-box">
-                <h3>Instrucciones</h3>
-                <p>Utiliza el menú de la izquierda para acceder a cada módulo.</p>
+            <section class="dashboard-graphs">
+                <h2>Resumen de Vendedores</h2>
+                <div class="charts-container" style="display: flex; gap: 30px; flex-wrap: wrap;">
+                    <div class="chart-box" style="flex: 1; min-width: 300px;">
+                        <canvas id="estadoChart"></canvas>
+                    </div>
+                    <div class="chart-box" style="flex: 1; min-width: 300px;">
+                        <canvas id="zonaChart"></canvas>
+                    </div>
+                    <div class="chart-box" style="flex: 1; min-width: 300px;">
+                        <canvas id="topZonasChart"></canvas>
+                    </div>
+                </div>
             </section>
+
+            <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+            <script>
+                const estadoData = {{ estado_data| tojson }};
+                const zonaData = {{ zona_data| tojson }};
+                const topZonas = {{ top5_zonas| tojson }};
+
+                // Gráfico de pastel: Activos vs Inactivos
+                new Chart(document.getElementById('estadoChart'), {
+                    type: 'pie',
+                    data: {
+                        labels: Object.keys(estadoData),
+                        datasets: [{
+                            data: Object.values(estadoData),
+                            backgroundColor: ['#4CAF50', '#F44336']
+                        }]
+                    },
+                    options: {
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Vendedores Activos vs Inactivos'
+                            }
+                        }
+                    }
+                });
+
+                // Gráfico horizontal: Vendedores por Zona
+                new Chart(document.getElementById('zonaChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: zonaData.map(z => z[0]),
+                        datasets: [{
+                            label: 'Cantidad de Vendedores',
+                            data: zonaData.map(z => z[1]),
+                            backgroundColor: '#2196F3'
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Vendedores por Zona'
+                            }
+                        },
+                        scales: {
+                            y: {
+                                ticks: {
+                                    font: {
+                                        size: 14
+                                    }
+                                }
+                            },
+                            x: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+
+                // Gráfico horizontal: Top 5 Zonas con más Vendedores
+                new Chart(document.getElementById('topZonasChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: topZonas.map(z => z[0]),
+                        datasets: [{
+                            label: 'Top 5 Zonas',
+                            data: topZonas.map(z => z[1]),
+                            backgroundColor: '#FFC107'
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Top 5 Zonas con más Vendedores'
+                            }
+                        },
+                        scales: {
+                            y: {
+                                ticks: {
+                                    font: {
+                                        size: 14
+                                    }
+                                }
+                            },
+                            x: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+            </script>
+
         </main>
     </div>
 </body>
+
 </html>

@@ -3,46 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Vendedores - Sistema de Rutas</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <style>
-        table {
-            width: 95%;
-            margin: 20px auto;
-            border-collapse: collapse;
-        }
-        th, td {
-            padding: 10px;
-            border: 1px solid #ccc;
-            text-align: center;
-        }
-        th {
-            background-color: #f5f5f5;
-        }
-        .pagination {
-            text-align: center;
-            margin: 20px;
-        }
-        .pagination a {
-            margin: 0 5px;
-            text-decoration: none;
-            padding: 6px 12px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            color: #333;
-        }
-        .pagination span {
-            padding: 6px 12px;
-            font-weight: bold;
-        }
-        .search-bar {
-            text-align: center;
-            margin: 20px;
-        }
-        .search-bar input[type="text"], .search-bar select {
-            padding: 6px;
-            margin-right: 10px;
-        }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='vendedores.css') }}">
 </head>
 <body>
     <div class="dashboard-container">
@@ -53,28 +14,27 @@
                 <p>{{ session['rol'] }}</p>
             </div>
             <nav class="menu">
-               <ul>
-        <li><a href="/ventas">Ventas</a></li>
-        <li><a href="/rutas">Rutas</a></li>
-        <li><a href="/vendedores">Vendedores</a></li>
-        <li><a href="/clientes">Clientes</a></li>
-        <li><a href="/paquetes" {% if request.path == '/paquetes' %}class="active"{% endif %}>Paquetes</a></li>
-        <li><a href="/reportes">Reportes</a></li>
-    </ul>
+                <ul>
+                    <li><a href="/dashboard">Dashboard</a></li>
+                    <li><a href="/vendedores" class="active">Vendedores</a></li>
+                    <li><a href="/clientes">Clientes</a></li>
+                    <li><a href="/paquetes">Paquetes de Internet</a></li>
+                    <li><a href="/ventas">Ventas</a></li>
+                    <li><a href="/rutas">Rutas</a></li>
+                    <li><a href="/reportes">Reportes</a></li>
+                </ul>
             </nav>
             <form action="/logout" method="POST">
                 <button class="logout-btn" type="submit">Cerrar sesión</button>
             </form>
         </aside>
 
-        <!-- Contenido -->
+        <!-- Contenido principal -->
         <main class="main-content">
             <header class="dashboard-header">
                 <h1>Listado de Vendedores</h1>
                 <p>Busca por nombre, apellido, zona o estado.</p>
-                <p style="text-align: center; font-weight: bold; margin-top: 10px;">
-                    Resultados encontrados: {{ total }}
-                </p>
+                <p class="resultados">Resultados encontrados: {{ total }}</p>
             </header>
 
             <!-- Buscador -->
@@ -91,28 +51,30 @@
             </div>
 
             <!-- Tabla -->
-            <table>
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Nombre</th>
-                        <th>Apellido</th>
-                        <th>Zona</th>
-                        <th>Estado</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for v in vendedores %}
-                    <tr>
-                        <td>{{ v[0] }}</td>
-                        <td>{{ v[1] }}</td>
-                        <td>{{ v[2] }}</td>
-                        <td>{{ v[3] }}</td>
-                        <td>{{ v[4] }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Apellido</th>
+                            <th>Zona</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for v in vendedores %}
+                        <tr>
+                            <td>{{ v[0] }}</td>
+                            <td>{{ v[1] }}</td>
+                            <td>{{ v[2] }}</td>
+                            <td>{{ v[3] }}</td>
+                            <td>{{ v[4] }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
 
             <!-- Paginación -->
             <div class="pagination">
