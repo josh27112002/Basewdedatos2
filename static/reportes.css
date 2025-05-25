@@ -1,0 +1,200 @@
+body {
+    font-family: 'Segoe UI', sans-serif;
+    margin: 0;
+    background-color: #f5f7fa;
+}
+
+.dashboard-container {
+    display: flex;
+    min-height: 100vh;
+}
+
+.sidebar {
+    width: 240px;
+    background-color: #0f1e3e;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    padding: 25px 15px;
+}
+
+.user-info {
+    text-align: left;
+    margin-bottom: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    padding-bottom: 15px;
+}
+
+.user-info h3 {
+    margin: 0;
+    font-size: 18px;
+}
+
+.user-info p {
+    margin: 5px 0 0;
+    font-size: 14px;
+    color: #c3c3c3;
+}
+
+.menu ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.menu ul li {
+    margin-bottom: 18px;
+}
+
+.menu ul li a {
+    display: block;
+    padding: 10px 16px;
+    color: white;
+    text-decoration: none;
+    font-size: 16px;
+    border-radius: 6px;
+    transition: background-color 0.3s;
+}
+
+.menu ul li a:hover,
+.menu ul li a.active {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.logout-btn {
+    margin-top: 30px;
+    padding: 10px 20px;
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 15px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.logout-btn:hover {
+    background-color: #c0392b;
+}
+
+.main-content {
+    flex: 1;
+    padding: 40px;
+    background-color: #ffffff;
+    overflow-y: auto;
+}
+
+.dashboard-header h1 {
+    margin-top: 0;
+    color: #333;
+}
+
+.dashboard-header p {
+    margin-top: 5px;
+    color: #555;
+}
+
+/* Filtros */
+.filtro-form {
+    text-align: center;
+    margin-top: 25px;
+}
+
+.filtro-form form {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+}
+
+.filtro-form select,
+.filtro-form input[type="text"],
+.filtro-form input[type="date"],
+.filtro-form button {
+    padding: 8px 10px;
+    font-size: 15px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+}
+
+.filtro-form button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+.filtro-form button:hover {
+    background-color: #0056b3;
+}
+
+/* Tabla */
+table {
+    width: 95%;
+    margin: 30px auto;
+    border-collapse: collapse;
+    font-size: 15px;
+    background-color: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+th, td {
+    padding: 12px 15px;
+    text-align: center;
+    border-bottom: 1px solid #ddd;
+}
+
+th {
+    background-color: #f0f2f5;
+    color: #333;
+    font-weight: 600;
+}
+
+tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+/* Paginación */
+.pagination {
+    text-align: center;
+    margin: 30px 0;
+}
+
+.pagination a {
+    margin: 0 6px;
+    text-decoration: none;
+    padding: 6px 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    color: #007bff;
+    font-weight: bold;
+}
+
+.pagination span {
+    font-weight: bold;
+    padding: 6px 12px;
+}
+
+/* Exportación */
+form[action="/exportar_reporte"] {
+    text-align: center;
+    margin-top: 10px;
+}
+
+form[action="/exportar_reporte"] button {
+    margin: 5px;
+    padding: 8px 14px;
+    font-size: 15px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+form[action="/exportar_reporte"] button:hover {
+    background-color: #218838;
+}

@@ -1,13 +1,133 @@
-<!-- templates/reportes.html -->
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
-    <title>Reportes</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <title>Reportes - Sistema de Rutas</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='reportes.css') }}">
 </head>
+
 <body>
-    <h1>Reportes Mensuales</h1>
-    <p>(Aquí puedes mostrar estadísticas de ventas, tiempo muerto, etc.)</p>
+    <div class="dashboard-container">
+        <!-- Menú lateral -->
+        <aside class="sidebar">
+            <div class="user-info">
+                <h3>{{ session['nombre_usuario'] }}</h3>
+                <p>{{ session['rol'] }}</p>
+            </div>
+            <nav class="menu">
+                <ul>
+                    <li><a href="/dashboard">Dashboard</a></li>
+                    <li><a href="/vendedores">Vendedores</a></li>
+                    <li><a href="/clientes">Clientes</a></li>
+                    <li><a href="/paquetes">Paquetes de Internet</a></li>
+                    <li><a href="/ventas">Ventas</a></li>
+                    <li><a href="/rutas">Rutas</a></li>
+                    <li><a href="/tiempomuerto">Tiempo Muerto</a></li>
+                    <li><a href="/reportes" class="active">Reportes</a></li>
+                </ul>
+            </nav>
+            <form action="/logout" method="POST">
+                <button class="logout-btn" type="submit">Cerrar sesión</button>
+            </form>
+        </aside>
+
+        <!-- Contenido -->
+        <main class="main-content">
+            <header class="dashboard-header">
+                <h1>Generador de Reportes</h1>
+                <p>Selecciona el módulo, aplica filtros y exporta los datos.</p>
+                {% if total %}
+                <p style="text-align: center; font-weight: bold;">Resultados encontrados: {{ total }}</p>
+                {% endif %}
+            </header>
+
+            <!-- Filtros -->
+            <div class="filtro-form">
+                <form method="post">
+                    <select name="modulo" required onchange="this.form.submit()">
+                        <option value="" disabled selected>Selecciona un módulo</option>
+                        <option value="vendedores" {% if modulo_seleccionado=='vendedores' %}selected{% endif %}>
+                            Vendedores</option>
+                        <option value="clientes" {% if modulo_seleccionado=='clientes' %}selected{% endif %}>Clientes
+                        </option>
+                        <option value="paquetes" {% if modulo_seleccionado=='paquetes' %}selected{% endif %}>Paquetes de
+                            Internet</option>
+                        <option value="ventas" {% if modulo_seleccionado=='ventas' %}selected{% endif %}>Ventas</option>
+                        <option value="rutas" {% if modulo_seleccionado=='rutas' %}selected{% endif %}>Rutas</option>
+                        <option value="tiempomuerto" {% if modulo_seleccionado=='tiempomuerto' %}selected{% endif %}>
+                            Tiempo Muerto</option>
+                    </select>
+
+                    {% if modulo_seleccionado in ['ventas', 'rutas', 'tiempomuerto'] %}
+                    <input type="date" name="fecha_inicio" value="{{ fecha_inicio }}">
+                    <input type="date" name="fecha_fin" value="{{ fecha_fin }}">
+                    {% elif modulo_seleccionado == 'clientes' %}
+                    <input type="text" name="departamento" placeholder="Departamento" value="{{ departamento or '' }}">
+                    {% elif modulo_seleccionado == 'vendedores' %}
+                    <input type="text" name="zona" placeholder="Zona" value="{{ zona or '' }}">
+                    {% endif %}
+
+                    <button type="submit">Filtrar y Previsualizar</button>
+                </form>
+            </div>
+
+            <!-- Tabla de Resultados -->
+            {% if columnas and datos %}
+            <table>
+                <thead>
+                    <tr>
+                        {% for col in columnas %}
+                        <th>{{ col }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for fila in datos %}
+                    <tr>
+                        {% for valor in fila %}
+                        <td>{{ valor }}</td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <!-- Paginación -->
+            <div class="pagination">
+                {% if page > 1 %}
+                <a
+                    href="{{ url_for('reportes_page', page=page-1, modulo=modulo_seleccionado, fecha_inicio=fecha_inicio, fecha_fin=fecha_fin, zona=zona, departamento=departamento) }}">←
+                    Anterior</a>
+                {% endif %}
+                <span>Página {{ page }} de {{ total_pages }}</span>
+                {% if page < total_pages %} <a
+                    href="{{ url_for('reportes_page', page=page+1, modulo=modulo_seleccionado, fecha_inicio=fecha_inicio, fecha_fin=fecha_fin, zona=zona, departamento=departamento) }}">
+                    Siguiente →</a>
+                    {% endif %}
+            </div>
+
+
+            <!-- Exportación -->
+            <form method="post" action="{{ url_for('exportar_reporte') }}">
+                <input type="hidden" name="modulo" value="{{ modulo_seleccionado }}">
+                <input type="hidden" name="fecha_inicio" value="{{ fecha_inicio }}">
+                <input type="hidden" name="fecha_fin" value="{{ fecha_fin }}">
+                {% if zona %}
+                <input type="hidden" name="zona" value="{{ zona }}">
+                {% endif %}
+                {% if departamento %}
+                <input type="hidden" name="departamento" value="{{ departamento }}">
+                {% endif %}
+                <div style="text-align: center; margin: 20px;">
+                    <button type="submit" name="formato" value="excel">Exportar a Excel</button>
+                    <button type="submit" name="formato" value="csv">Exportar a CSV</button>
+                    <button type="submit" name="formato" value="pdf">Exportar a PDF</button>
+                </div>
+            </form>
+            {% endif %}
+        </main>
+    </div>
 </body>
+
 </html>

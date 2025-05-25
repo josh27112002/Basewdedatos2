@@ -4,6 +4,12 @@ import smtplib
 import random
 from email.mime.text import MIMEText
 
+
+from flask import send_file
+import pandas as pd
+import io
+
+
 app = Flask(__name__)
 app.secret_key = 'clavesecreta'
 
@@ -56,7 +62,7 @@ def index():
             "borderWidth": 2
         })
 
-    # Ventas - Top 5 vendedores con más ventas
+    # Top 5 vendedores con más ventas
     cursor.execute("""
         SELECT V.Nombre || ' ' || V.Apellido, COUNT(*) AS total
         FROM Venta VE
@@ -107,7 +113,7 @@ def index():
         "ventas": [ventas_por_depto.get(dep, 0) for dep in sorted(departamentos)]
     }
 
-    # NUEVO: Rutas vs Clientes por Municipio
+    # Rutas vs Clientes por Municipio
     cursor.execute("""
         SELECT
             C.Municipio,
@@ -126,6 +132,38 @@ def index():
         "clientes": [r[2] for r in resultado]
     }
 
+    # CAUSAS DE TIEMPO MUERTO POR MES (para gráfica de línea)
+    cursor.execute("""
+        SELECT TO_CHAR(Fecha, 'YYYY-MM') AS Mes, Descripcion, COUNT(*) AS Total
+        FROM TiempoMuerto
+        GROUP BY TO_CHAR(Fecha, 'YYYY-MM'), Descripcion
+        ORDER BY Mes
+    """)
+    result = cursor.fetchall()
+
+    from collections import defaultdict
+    causa_mensual = defaultdict(lambda: defaultdict(int))
+    for mes, desc, total in result:
+        causa_mensual[desc][mes] += total
+
+    # Top 3 causas más comunes
+    totales_causa = {desc: sum(meses.values()) for desc, meses in causa_mensual.items()}
+    top_causas = sorted(totales_causa, key=totales_causa.get, reverse=True)[:3]
+
+    meses_unicos = sorted({mes for desc in top_causas for mes in causa_mensual[desc]})
+    causas_line_chart = {
+        "labels": meses_unicos,
+        "datasets": []
+    }
+
+    for causa in top_causas:
+        dataset = {
+            "label": causa,
+            "data": [causa_mensual[causa].get(mes, 0) for mes in meses_unicos],
+            "borderWidth": 2
+        }
+        causas_line_chart["datasets"].append(dataset)
+
     cursor.close()
     conn.close()
 
@@ -139,7 +177,8 @@ def index():
                            ventas_mensuales=ventas_mensuales,
                            rutas_estado_data=rutas_estado_data,
                            rutas_ventas_depto_data=rutas_ventas_depto_data,
-                           rutas_clientes_municipio=rutas_clientes_municipio)
+                           rutas_clientes_municipio=rutas_clientes_municipio,
+                           causas_line_chart=causas_line_chart)
 
 
 #REGISTRO
@@ -530,11 +569,6 @@ def clientes_page():
     )
 
 
-@app.route('/reportes')
-def reportes_page():
-    return render_template('reportes.html')
-
-
 #cerrar sesion
 @app.route('/logout', methods=['POST'])
 def logout():
@@ -542,6 +576,8 @@ def logout():
     flash("Sesión cerrada correctamente.", "info")
     return redirect(url_for('login'))  # Redirige al index2.html (pantalla de bienvenida)
 
+
+# Seccion de paquetes de internet
 @app.route('/paquetes')
 def paquetes_page():
     page = int(request.args.get('page', 1))
@@ -661,6 +697,213 @@ def tiempo_muerto_page():
         filtro=filtro,
         total=total
     )
+
+
+#reportes
+@app.route('/reportes', methods=['GET', 'POST'])
+def reportes_page():
+    datos = []
+    columnas = []
+    modulo_seleccionado = ''
+    fecha_inicio = ''
+    fecha_fin = ''
+    zona = ''
+    departamento = ''
+
+    # Paginación
+    page = int(request.args.get('page', 1))
+    per_page = 10
+    offset = (page - 1) * per_page
+    total = 0
+
+    if request.method == 'POST' or request.args.get('modulo'):
+        modulo = request.form.get('modulo') or request.args.get('modulo')
+        fecha_inicio = request.form.get('fecha_inicio') or request.args.get('fecha_inicio', '')
+        fecha_fin = request.form.get('fecha_fin') or request.args.get('fecha_fin', '')
+        zona = request.form.get('zona') or request.args.get('zona', '')
+        departamento = request.form.get('departamento') or request.args.get('departamento', '')
+        modulo_seleccionado = modulo
+
+        conn = get_connection()
+        cursor = conn.cursor()
+
+        query = ""
+        count_query = ""
+        valores = {}
+
+        if modulo == 'vendedores':
+            query = "SELECT ID_Vendedor, Nombre, Apellido, Zona_Asignada, Estado FROM Vendedor"
+            count_query = "SELECT COUNT(*) FROM Vendedor"
+            if zona:
+                query += " WHERE Zona_Asignada = :zona"
+                count_query += " WHERE Zona_Asignada = :zona"
+                valores['zona'] = zona
+
+        elif modulo == 'clientes':
+            query = "SELECT ID_Cliente, Nombre, Municipio, Departamento, Direccion FROM Cliente"
+            count_query = "SELECT COUNT(*) FROM Cliente"
+            if departamento:
+                query += " WHERE Departamento = :departamento"
+                count_query += " WHERE Departamento = :departamento"
+                valores['departamento'] = departamento
+
+        elif modulo == 'paquetes':
+            query = "SELECT ID_Paquete, Nombre, Velocidad_MBPS, Precio, Descripcion FROM PaqueteInternet"
+            count_query = "SELECT COUNT(*) FROM PaqueteInternet"
+
+        else:
+            fecha_col = "Fecha" if modulo in ['ventas', 'tiempomuerto'] else "Fecha_Creacion"
+
+            if modulo == 'ventas':
+                query = "SELECT ID_Venta, ID_Cliente, ID_Vendedor, ID_Paquete, Fecha, Monto FROM Venta"
+                count_query = "SELECT COUNT(*) FROM Venta"
+            elif modulo == 'rutas':
+                query = "SELECT ID_Ruta, Zona, Municipio, Departamento, Estado, Fecha_Creacion FROM Ruta"
+                count_query = "SELECT COUNT(*) FROM Ruta"
+            elif modulo == 'tiempomuerto':
+                query = "SELECT ID_TiempoMuerto, ID_Ruta, ID_Vendedor, Descripcion, Fecha, Duracion_Horas FROM TiempoMuerto"
+                count_query = "SELECT COUNT(*) FROM TiempoMuerto"
+
+            filtros = []
+            if fecha_inicio:
+                filtros.append(f"{fecha_col} >= TO_DATE(:fi, 'YYYY-MM-DD')")
+                valores['fi'] = fecha_inicio
+            if fecha_fin:
+                filtros.append(f"{fecha_col} <= TO_DATE(:ff, 'YYYY-MM-DD')")
+                valores['ff'] = fecha_fin
+
+            if filtros:
+                where_clause = " WHERE " + " AND ".join(filtros)
+                query += where_clause
+                count_query += where_clause
+
+        query += " OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY"
+        valores['offset'] = offset
+        valores['limit'] = per_page
+
+        cursor.execute(count_query, {k: v for k, v in valores.items() if k not in ['offset', 'limit']})
+        total = cursor.fetchone()[0]
+
+        cursor.execute(query, valores)
+        datos = cursor.fetchall()
+        columnas = [col[0] for col in cursor.description]
+
+        cursor.close()
+        conn.close()
+
+    total_pages = (total + per_page - 1) // per_page if total > 0 else 1
+
+    return render_template("reportes.html",
+                           datos=datos,
+                           columnas=columnas,
+                           modulo_seleccionado=modulo_seleccionado,
+                           fecha_inicio=fecha_inicio,
+                           fecha_fin=fecha_fin,
+                           zona=zona,
+                           departamento=departamento,
+                           page=page,
+                           total_pages=total_pages)
+
+
+
+#exportacion de reportes
+@app.route('/exportar_reporte', methods=['POST'])
+def exportar_reporte():
+    import pandas as pd
+    import io
+    from flask import send_file
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import letter
+
+    formato = request.form['formato']
+    modulo = request.form['modulo']
+    fecha_inicio = request.form.get('fecha_inicio')
+    fecha_fin = request.form.get('fecha_fin')
+    zona = request.form.get('zona')
+    departamento = request.form.get('departamento')
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    columnas = []
+    query = ""
+    fecha_col = "Fecha"
+    valores = {}
+
+    if modulo == 'ventas':
+        query = "SELECT ID_Venta, ID_Cliente, ID_Vendedor, ID_Paquete, Fecha, Monto FROM Venta"
+        fecha_col = "Fecha"
+    elif modulo == 'rutas':
+        query = "SELECT ID_Ruta, Zona, Municipio, Departamento, Estado, Fecha_Creacion FROM Ruta"
+        fecha_col = "Fecha_Creacion"
+    elif modulo == 'tiempomuerto':
+        query = "SELECT ID_TiempoMuerto, ID_Ruta, ID_Vendedor, Descripcion, Fecha, Duracion_Horas FROM TiempoMuerto"
+        fecha_col = "Fecha"
+    elif modulo == 'clientes':
+        query = "SELECT ID_Cliente, Nombre, Municipio, Departamento, Direccion FROM Cliente"
+        if departamento:
+            query += " WHERE Departamento = :departamento"
+            valores['departamento'] = departamento
+    elif modulo == 'paquetes':
+        query = "SELECT ID_Paquete, Nombre, Velocidad_MBPS, Precio, Descripcion FROM PaqueteInternet"
+    elif modulo == 'vendedores':
+        query = "SELECT ID_Vendedor, Nombre, Apellido, Zona_Asignada, Estado FROM Vendedor"
+        if zona:
+            query += " WHERE Zona_Asignada = :zona"
+            valores['zona'] = zona
+
+    if modulo in ['ventas', 'rutas', 'tiempomuerto']:
+        filtros = []
+        if fecha_inicio:
+            filtros.append(f"{fecha_col} >= TO_DATE(:fi, 'YYYY-MM-DD')")
+            valores['fi'] = fecha_inicio
+        if fecha_fin:
+            filtros.append(f"{fecha_col} <= TO_DATE(:ff, 'YYYY-MM-DD')")
+            valores['ff'] = fecha_fin
+        if filtros:
+            query += " WHERE " + " AND ".join(filtros) if "WHERE" not in query else " AND " + " AND ".join(filtros)
+
+    cursor.execute(query, valores)
+    data = cursor.fetchall()
+    columnas = [col[0] for col in cursor.description]
+    df = pd.DataFrame(data, columns=columnas)
+    cursor.close()
+    conn.close()
+
+    output = io.BytesIO()
+
+    if formato == 'excel':
+        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+            df.to_excel(writer, index=False, sheet_name='Reporte')
+        output.seek(0)
+        return send_file(output, download_name='reporte.xlsx', as_attachment=True)
+
+    elif formato == 'csv':
+        output.write(df.to_csv(index=False).encode('utf-8'))
+        output.seek(0)
+        return send_file(output, download_name='reporte.csv', as_attachment=True)
+
+    elif formato == 'pdf':
+        pdf_output = io.BytesIO()
+        doc = SimpleDocTemplate(pdf_output, pagesize=letter)
+        data_for_pdf = [columnas] + df.values.tolist()
+
+        table = Table(data_for_pdf)
+        table.setStyle(TableStyle([
+            ('BACKGROUND', (0,0), (-1,0), colors.gray),
+            ('TEXTCOLOR', (0,0), (-1,0), colors.whitesmoke),
+            ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+            ('GRID', (0,0), (-1,-1), 0.5, colors.black),
+            ('FONTSIZE', (0,0), (-1,-1), 8),
+        ]))
+
+        doc.build([table])
+        pdf_output.seek(0)
+        return send_file(pdf_output, download_name='reporte.pdf', as_attachment=True)
+
+    return "Formato no válido", 400
+
 
 
 

@@ -99,6 +99,16 @@
                 </div>
             </section>
 
+            <!-- seccion de Tiempo Muerto -->
+            <section class="dashboard-graphs">
+                <h2>Resumen de Tiempo Muerto</h2>
+                <div class="charts-container">
+                    <div class="chart-box" style="width: 100%; height: 400px;">
+                        <canvas id="lineChartTiempoMuerto"></canvas>
+                    </div>
+                </div>
+            </section>
+
             <!-- Scripts -->
             <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
             <script>
@@ -112,6 +122,7 @@
                 const rutasEstado = {{ rutas_estado_data | tojson }};
                 const rutasVentasDepto = {{ rutas_ventas_depto_data | tojson }};
                 const rutasClientesMunicipio = {{ rutas_clientes_municipio | tojson }};
+                const causasLineChart = {{ causas_line_chart | tojson }};
 
 
                 // Vendedores Activos vs Inactivos
@@ -367,9 +378,6 @@
                     }
                 });
 
-
-
-                // Rutas vs Clientes por Municipio (Scatter Plot)
                 // Rutas vs Clientes por Municipio (Gráfico de Barras Horizontal)
                 new Chart(document.getElementById('rutasClientesMunicipioChart'), {
                     type: 'bar',
@@ -408,6 +416,38 @@
                         }
                     }
                 });
+
+                // Grafico de Tiempo Muerto
+                new Chart(document.getElementById('lineChartTiempoMuerto'), {
+                    type: 'line',
+                    data: {
+                        labels: causasLineChart.labels,
+                        datasets: causasLineChart.datasets.map(dataset => ({
+                            ...dataset,
+                            fill: false,
+                            borderColor: `hsl(${Math.random() * 360}, 70%, 50%)`,
+                            tension: 0.3,
+                            pointRadius: 4,
+                            pointHoverRadius: 6
+                        }))
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Principales Causas de Tiempo Muerto por Mes'
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+
 
 
             </script>
