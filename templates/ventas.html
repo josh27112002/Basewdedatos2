@@ -2,33 +2,91 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Clientes</title>
+    <title>Listado de Ventas</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='ventas.css') }}">
 </head>
 <body>
-    <h1>Lista de Clientes</h1>
-    <table>
-        <thead>
-            <tr>
-                <th>ID Cliente</th>
-                <th>Nombre</th>
-                <th>Municipio</th>
-                <th>Departamento</th>
-                <th>Dirección</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for cliente in clientes %}
-            <tr>
-                <td>{{ cliente.ID_CLIENTE }}</td>
-                <td>{{ cliente.NOMBRE }}</td>
-                <td>{{ cliente.MUNICIPIO }}</td>
-                <td>{{ cliente.DEPARTAMENTO }}</td>
-                <td>{{ cliente.DIRECCION }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    <a href="{{ url_for('routes.index') }}">← Volver al inicio</a>
+    <div class="dashboard-container">
+        <!-- Menú lateral -->
+        <aside class="sidebar">
+            <div class="user-info">
+                <h3>{{ session['nombre_usuario'] }}</h3>
+                <p>{{ session['rol'] }}</p>
+            </div>
+            <nav class="menu">
+                <ul>
+                    <li><a href="/dashboard">Dashboard</a></li>
+                    <li><a href="/vendedores">Vendedores</a></li>
+                    <li><a href="/clientes">Clientes</a></li>
+                    <li><a href="/paquetes">Paquetes de Internet</a></li>
+                    <li><a href="/ventas" class="active">Ventas</a></li>
+                    <li><a href="/rutas">Rutas</a></li>
+                    <li><a href="/tiempomuerto">Tiempo Muerto</a></li>
+                    <li><a href="/reportes">Reportes</a></li>
+                </ul>
+            </nav>
+            <form action="/logout" method="POST">
+                <button class="logout-btn" type="submit">Cerrar sesión</button>
+            </form>
+        </aside>
+
+        <!-- Contenido -->
+        <main class="main-content">
+            <header class="dashboard-header">
+                <h1>Listado de Ventas</h1>
+                <p>Consulta las ventas realizadas por fecha, zona, cliente o vendedor.</p>
+                <p class="resultados">Resultados encontrados: {{ total }}</p>
+            </header>
+
+            <!-- Buscador -->
+            <div class="search-bar">
+                <form method="get" action="{{ url_for('ventas_page') }}">
+                    <input type="text" name="buscar" placeholder="Buscar por cliente, vendedor" value="{{ filtro }}">
+                    <input type="date" name="desde" value="{{ desde }}">
+                    <input type="date" name="hasta" value="{{ hasta }}">
+                    <button type="submit">Buscar</button>
+                </form>
+            </div>
+
+            <!-- Tabla -->
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Cliente</th>
+                            <th>Vendedor</th>
+                            <th>Paquete Adquirido</th>
+                            <th>Monto (Q)</th>
+                            <th>Fecha</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for v in ventas %}
+                        <tr>
+                            <td>{{ v[0] }}</td>
+                            <td>{{ v[1] }}</td>
+                            <td>{{ v[2] }}</td>
+                            <td>{{ v[3] }}</td>
+                            <td>{{ v[4] }}</td>
+                            <td>{{ v[5] }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Paginación -->
+            <div class="pagination">
+                {% if page > 1 %}
+                    <a href="{{ url_for('ventas_page', page=page-1, buscar=filtro, desde=desde, hasta=hasta) }}">← Anterior</a>
+                {% endif %}
+                <span>Página {{ page }} de {{ total_pages }}</span>
+                {% if page < total_pages %}
+                    <a href="{{ url_for('ventas_page', page=page+1, buscar=filtro, desde=desde, hasta=hasta) }}">Siguiente →</a>
+                {% endif %}
+            </div>
+        </main>
+    </div>
 </body>
 </html>

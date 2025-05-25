@@ -1,131 +1,113 @@
 body {
-  font-family: 'Segoe UI', sans-serif;
-  margin: 0;
-  background-color: #f0f2f5;
+    font-family: 'Segoe UI', sans-serif;
+    margin: 0;
+    background-color: #f0f2f5;
 }
 
-/* Contenedor principal */
 .dashboard-container {
-  display: flex;
-  min-height: 100vh;
-  flex-direction: row;
+    display: flex;
+    min-height: 100vh;
 }
 
-/* Sidebar izquierdo */
+/* Sidebar */
 .sidebar {
-  width: 240px;
-  background-color: #0f1e3e;
-  color: #ffffff;
-  display: flex;
-  flex-direction: column;
-  padding: 30px 20px;
-  justify-content: space-between;
+    width: 240px;
+    background-color: #0f1e3e;
+    color: #ffffff;
+    display: flex;
+    flex-direction: column;
+    padding: 30px 20px;
 }
 
-.user-info {
-  text-align: left;
-  margin-bottom: -290px; /* Espacio adecuado */
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-  padding-bottom: 15px;
+.sidebar .user-info {
+    margin-bottom: 20px;
 }
 
-
-.user-info h3 {
-  margin: 0;
-  font-size: 18px;
+.sidebar .user-info h3 {
+    margin: 0;
+    font-size: 18px;
 }
 
-.user-info p {
-  margin: 4px 0 0;
-  font-size: 14px;
-  color: #c3c3c3;
+.sidebar .user-info p {
+    margin: 5px 0 0;
+    font-size: 14px;
+    color: #c3c3c3;
 }
 
 .menu ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
+    list-style: none;
+    padding: 0;
+    margin: 0;
 }
 
 .menu ul li {
-  margin-bottom: 15px;
+    margin-bottom: 18px;
 }
 
 .menu ul li a {
-  display: block;
-  padding: 12px 18px;
-  color: white;
-  font-size: 17px;
-  border-radius: 8px;
-  text-decoration: none;
-  transition: background-color 0.3s ease;
+    display: block;
+    padding: 10px 16px;
+    color: white;
+    text-decoration: none;
+    font-size: 16px;
+    border-radius: 6px;
+    transition: background-color 0.3s;
 }
 
-.menu ul li a:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-}
-
+.menu ul li a:hover,
 .menu ul li a.active {
-  background-color: rgba(255, 255, 255, 0.15);
+    background-color: rgba(255, 255, 255, 0.15);
 }
 
 .logout-btn {
-  align-self: flex-start;
-  margin-top: auto;
-  padding: 10px 20px;
-  background-color: #e74c3c;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-size: 15px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
+    margin-top: 20px;
+    padding: 10px 20px;
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 15px;
+    cursor: pointer;
+    transition: background-color 0.3s;
 }
 
 .logout-btn:hover {
-  background-color: #c0392b;
+    background-color: #c0392b;
 }
 
 /* Contenido principal */
 .main-content {
-  flex: 1;
-  padding: 40px;
-  background-color: #ffffff;
-  overflow-y: auto;
+    flex: 1;
+    padding: 40px;
+    background-color: #ffffff;
+    overflow-y: auto;
 }
 
 .dashboard-header h1 {
-  margin-top: 0;
-  color: #333333;
+    margin-top: 0;
+    color: #333333;
 }
 
 .dashboard-header p {
-  margin-top: 5px;
-  color: #666666;
-}
-
-.info-box {
-  margin-top: 30px;
-  background-color: #eaf3ff;
-  padding: 20px;
-  border-left: 5px solid #007bff;
-  border-radius: 5px;
+    margin-top: 5px;
+    color: #666666;
 }
 
 .dashboard-graphs {
-  margin-top: 40px;
+    margin-top: 40px;
 }
 
 .charts-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 30px;
-  justify-content: space-around;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 30px;
+    justify-content: space-around;
 }
 
 .chart-box {
-    width: 600px; /* antes: 400px */
-    height: 400px;
+    width: 400px;
+    min-height: 400px;
+    /* ← puedes aumentar aquí */
     background: #ffffff;
     border-radius: 10px;
     padding: 20px;
@@ -133,55 +115,90 @@ body {
 }
 
 
-/* Botón para pantallas pequeñas */
-.menu-toggle {
-  display: none;
-  background-color: #0f1e3e;
-  color: white;
-  padding: 15px;
-  font-size: 18px;
-  border: none;
-  width: 100%;
-  text-align: left;
-  cursor: pointer;
+.chart-box-full {
+    width: 100%;
+    background: #ffffff;
+    max-width: 900px;
+    margin: 0 auto 40px auto;
+    /* centra el div horizontalmente */
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 40px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
-/* RESPONSIVE */
+
+/* Heatmap style */
+.heatmap-box {
+    width: 600px;
+    background: #ffffff;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive */
 @media (max-width: 768px) {
-  .dashboard-container {
-    flex-direction: column;
-  }
+    .dashboard-container {
+        flex-direction: column;
+    }
 
-  .sidebar {
-    display: none;
-    width: 100%;
-    padding: 20px;
-  }
+    .sidebar {
+        width: 100%;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 20px;
+    }
 
-  .sidebar.active {
-    display: flex;
-  }
+    .sidebar .menu ul {
+        display: flex;
+        gap: 15px;
+    }
 
-  .main-content {
-    width: 100%;
-    padding: 20px;
-  }
+    .main-content {
+        padding: 20px;
+    }
 
-  .menu-toggle {
-    display: block;
-  }
-
-  .charts-container {
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .chart-box {
-    width: 100%;
-  }
-
-  .logout-btn {
-    width: 100%;
-    text-align: center;
-  }
+    .chart-box,
+    .heatmap-box {
+        width: 100%;
+    }
 }
+
+
+
+.chart-box canvas {
+    width: 100% !important;
+    height: auto !important;
+}
+
+
+
+
+.ventas-container-center {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 40px;
+    margin-bottom: 40px;
+}
+
+.chart-box-center {
+    background: #ffffff;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 480px;
+}
+
+.chart-box-full {
+    width: 100%;
+    background: #ffffff;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 30px;
+}
+

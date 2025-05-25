@@ -2,8 +2,8 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Rutas - Sistema de Rutas</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='rutas.css') }}">
+    <title>Tiempo Muerto - Sistema de Rutas</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='tiempomuerto.css') }}">
 </head>
 <body>
     <div class="dashboard-container">
@@ -20,8 +20,8 @@
                     <li><a href="/clientes">Clientes</a></li>
                     <li><a href="/paquetes">Paquetes de Internet</a></li>
                     <li><a href="/ventas">Ventas</a></li>
-                    <li><a href="/rutas" class="active">Rutas</a></li>
-                    <li><a href="/tiempomuerto">Tiempo Muerto</a></li>
+                    <li><a href="/rutas">Rutas</a></li>
+                    <li><a href="/tiempomuerto" class="active">Tiempo Muerto</a></li>
                     <li><a href="/reportes">Reportes</a></li>
                 </ul>
             </nav>
@@ -33,14 +33,14 @@
         <!-- Contenido -->
         <main class="main-content">
             <header class="dashboard-header">
-                <h1>Listado de Rutas</h1>
-                <p>Consulta y administra las rutas por zona, municipio y vendedor asignado.</p>
+                <h1>Listado de Tiempos Muertos</h1>
+                <p>Consulta los eventos de tiempo muerto registrados por vendedor, zona y ubicación.</p>
                 <p style="text-align: center; font-weight: bold;">Resultados encontrados: {{ total }}</p>
             </header>
 
             <!-- Buscador -->
             <div class="search-bar">
-                <form method="get" action="{{ url_for('rutas_page') }}">
+                <form method="get" action="{{ url_for('tiempo_muerto_page') }}">
                     <input type="text" name="buscar" value="{{ filtro }}" placeholder="Buscar por zona, municipio o vendedor">
                     <button type="submit">Buscar</button>
                 </form>
@@ -56,19 +56,23 @@
                         <th>Departamento</th>
                         <th>Vendedor Asignado</th>
                         <th>Estado</th>
+                        <th>Descripción</th>
                         <th>Fecha</th>
+                        <th>Duración (h)</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {% for r in rutas %}
+                    {% for t in tiempos %}
                     <tr>
-                        <td>{{ r[0] }}</td>
-                        <td>{{ r[1] }}</td>
-                        <td>{{ r[2] }}</td>
-                        <td>{{ r[3] }}</td>
-                        <td>{{ r[4] }}</td>
-                        <td>{{ r[5] }}</td>
-                        <td>{{ r[6] }}</td>
+                        <td>{{ t[0] }}</td>
+                        <td>{{ t[1] }}</td>
+                        <td>{{ t[2] }}</td>
+                        <td>{{ t[3] }}</td>
+                        <td>{{ t[4] }}</td>
+                        <td>{{ t[5] }}</td>
+                        <td>{{ t[6] }}</td>
+                        <td>{{ t[7] }}</td>
+                        <td>{{ t[8] }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
@@ -77,11 +81,11 @@
             <!-- Paginación -->
             <div class="pagination">
                 {% if page > 1 %}
-                    <a href="{{ url_for('rutas_page', page=page-1, buscar=filtro) }}">← Anterior</a>
+                    <a href="{{ url_for('tiempo_muerto_page', page=page-1, buscar=filtro) }}">← Anterior</a>
                 {% endif %}
                 <span>Página {{ page }} de {{ total_pages }}</span>
                 {% if page < total_pages %}
-                    <a href="{{ url_for('rutas_page', page=page+1, buscar=filtro) }}">Siguiente →</a>
+                    <a href="{{ url_for('tiempo_muerto_page', page=page+1, buscar=filtro) }}">Siguiente →</a>
                 {% endif %}
             </div>
         </main>

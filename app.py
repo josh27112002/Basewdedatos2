@@ -11,45 +11,135 @@ app.secret_key = 'clavesecreta'
 def index2():
     return render_template('index2.html')
 
-# Dashboard y logica para graficos
 @app.route('/dashboard')
 def index():
     conn = get_connection()
-    cur = conn.cursor()
+    cursor = conn.cursor()
 
-    # Cantidad de vendedores activos e inactivos
-    cur.execute("""
-        SELECT Estado, COUNT(*) FROM Vendedor
-        GROUP BY Estado
-    """)
-    estado_data = dict(cur.fetchall())
+    # Gráfico 1: Vendedores activos/inactivos
+    cursor.execute("SELECT Estado, COUNT(*) FROM Vendedor GROUP BY Estado")
+    estado_data = {row[0].capitalize(): row[1] for row in cursor.fetchall()}
 
-    # Cantidad de vendedores por zona
-    cur.execute("""
-        SELECT Zona_Asignada, COUNT(*) FROM Vendedor
-        GROUP BY Zona_Asignada
-    """)
-    zona_data = cur.fetchall()
+    # Gráfico 2: Vendedores por zona
+    cursor.execute("SELECT Zona_Asignada, COUNT(*) FROM Vendedor GROUP BY Zona_Asignada")
+    zona_data = cursor.fetchall()
 
-    # Top 5 zonas con más vendedores
-    cur.execute("""
-        SELECT Zona_Asignada, COUNT(*) AS total
+    # Gráfico 3: Top 5 zonas
+    cursor.execute("""
+        SELECT Zona_Asignada, COUNT(*) AS Total
         FROM Vendedor
         GROUP BY Zona_Asignada
-        ORDER BY total DESC
+        ORDER BY Total DESC
         FETCH FIRST 5 ROWS ONLY
     """)
-    top5_zonas = cur.fetchall()
+    top5_zonas = cursor.fetchall()
 
+    # Gráfico 4: Línea - Top 5 municipios con más clientes
+    cursor.execute("""
+        SELECT Municipio, COUNT(*) AS Total
+        FROM Cliente
+        GROUP BY Municipio
+        ORDER BY Total DESC
+        FETCH FIRST 5 ROWS ONLY
+    """)
+    top5_municipios = cursor.fetchall()
+
+    import random
+    line_chart_data = {
+        "labels": [f"M{m}" for m in range(1, 13)],
+        "datasets": []
+    }
+    for mun, _ in top5_municipios:
+        line_chart_data["datasets"].append({
+            "label": mun,
+            "data": [random.randint(50, 200) for _ in range(12)],
+            "borderWidth": 2
+        })
+
+    # Ventas - Top 5 vendedores con más ventas
+    cursor.execute("""
+        SELECT V.Nombre || ' ' || V.Apellido, COUNT(*) AS total
+        FROM Venta VE
+        JOIN Vendedor V ON VE.ID_Vendedor = V.ID_Vendedor
+        GROUP BY V.Nombre, V.Apellido
+        ORDER BY total DESC FETCH FIRST 5 ROWS ONLY
+    """)
+    top_vendedores = cursor.fetchall()
+
+    # Ventas por paquete
+    cursor.execute("""
+        SELECT PI.Descripcion, COUNT(*) AS total
+        FROM Venta VE
+        JOIN PaqueteInternet PI ON VE.ID_Paquete = PI.ID_Paquete
+        GROUP BY PI.Descripcion
+    """)
+    ventas_por_paquete = cursor.fetchall()
+
+    # Ventas mensuales (últimos 12 meses)
+    cursor.execute("""
+        SELECT TO_CHAR(Fecha, 'YYYY-MM') AS mes, COUNT(*) AS total
+        FROM Venta
+        WHERE Fecha >= ADD_MONTHS(TRUNC(SYSDATE, 'MM'), -11)
+        GROUP BY TO_CHAR(Fecha, 'YYYY-MM')
+        ORDER BY mes
+    """)
+    ventas_mensuales = cursor.fetchall()
+
+    # Estado de rutas
+    cursor.execute("SELECT Estado, COUNT(*) FROM Ruta GROUP BY Estado")
+    rutas_estado_data = {row[0].capitalize(): row[1] for row in cursor.fetchall()}
+
+    # Rutas vs Ventas por Departamento
+    cursor.execute("SELECT Departamento, COUNT(*) FROM Ruta GROUP BY Departamento")
+    rutas_por_depto = dict(cursor.fetchall())
+
+    cursor.execute("""
+        SELECT C.Departamento, COUNT(*) FROM Venta V
+        JOIN Cliente C ON V.ID_Cliente = C.ID_Cliente
+        GROUP BY C.Departamento
+    """)
+    ventas_por_depto = dict(cursor.fetchall())
+
+    departamentos = list(set(rutas_por_depto.keys()).union(set(ventas_por_depto.keys())))
+    rutas_ventas_depto_data = {
+        "departamentos": sorted(departamentos),
+        "rutas": [rutas_por_depto.get(dep, 0) for dep in sorted(departamentos)],
+        "ventas": [ventas_por_depto.get(dep, 0) for dep in sorted(departamentos)]
+    }
+
+    # NUEVO: Rutas vs Clientes por Municipio
+    cursor.execute("""
+        SELECT
+            C.Municipio,
+            COUNT(DISTINCT R.ID_Ruta) AS TotalRutas,
+            COUNT(DISTINCT C.ID_Cliente) AS TotalClientes
+        FROM Cliente C
+        LEFT JOIN Ruta R ON C.Municipio = R.Municipio
+        GROUP BY C.Municipio
+        ORDER BY C.Municipio
+        FETCH FIRST 10 ROWS ONLY
+    """)
+    resultado = cursor.fetchall()
+    rutas_clientes_municipio = {
+        "municipios": [r[0] for r in resultado],
+        "rutas": [r[1] for r in resultado],
+        "clientes": [r[2] for r in resultado]
+    }
+
+    cursor.close()
     conn.close()
 
-    return render_template(
-        'index.html',
-        estado_data=estado_data,
-        zona_data=zona_data,
-        top5_zonas=top5_zonas
-    )
-
+    return render_template("index.html",
+                           estado_data=estado_data,
+                           zona_data=zona_data,
+                           top5_zonas=top5_zonas,
+                           line_chart_data=line_chart_data,
+                           top_vendedores=top_vendedores,
+                           ventas_por_paquete=ventas_por_paquete,
+                           ventas_mensuales=ventas_mensuales,
+                           rutas_estado_data=rutas_estado_data,
+                           rutas_ventas_depto_data=rutas_ventas_depto_data,
+                           rutas_clientes_municipio=rutas_clientes_municipio)
 
 
 #REGISTRO
@@ -177,52 +267,144 @@ def login():
 
 
 
+#seccion ventas
+@app.route('/ventas')
+def ventas_page():
+    page = int(request.args.get('page', 1))
+    per_page = 50
+    offset = (page - 1) * per_page
 
-@app.route('/api/ventas')
-def ventas():
+    filtro = request.args.get('buscar', '').strip().lower()
+    desde = request.args.get('desde', '')
+    hasta = request.args.get('hasta', '')
+
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute("""
-        SELECT
-            V.ID_Venta AS ID_Venta,
-            C.Nombre AS Cliente,
-            V.Monto AS Monto,
-            TO_CHAR(V.Fecha, 'YYYY-MM-DD') AS Fecha,
-            VE.Nombre AS Vendedor
+
+    condiciones = []
+    valores = {'offset': offset, 'limit': per_page}
+
+    if filtro:
+        condiciones.append("""
+            (LOWER(CL.Nombre) LIKE :filtro OR LOWER(VE.Nombre) LIKE :filtro)
+        """)
+        valores['filtro'] = f"%{filtro}%"
+
+    if desde:
+        condiciones.append("Fecha >= TO_DATE(:desde, 'YYYY-MM-DD')")
+        valores['desde'] = desde
+
+    if hasta:
+        condiciones.append("Fecha <= TO_DATE(:hasta, 'YYYY-MM-DD')")
+        valores['hasta'] = hasta
+
+    where_clause = "WHERE " + " AND ".join(condiciones) if condiciones else ""
+
+    query = f"""
+        SELECT V.ID_Venta, CL.Nombre AS Cliente, VE.Nombre || ' ' || VE.Apellido AS Vendedor,
+               PI.Descripcion AS Paquete, V.Monto, TO_CHAR(V.Fecha, 'YYYY-MM-DD')
         FROM Venta V
-        JOIN Cliente C ON V.ID_Cliente = C.ID_Cliente
+        JOIN Cliente CL ON V.ID_Cliente = CL.ID_Cliente
         JOIN Vendedor VE ON V.ID_Vendedor = VE.ID_Vendedor
+        JOIN PaqueteInternet PI ON V.ID_Paquete = PI.ID_Paquete
+        {where_clause}
         ORDER BY V.Fecha DESC
-    """)
-    rows = cur.fetchall()
-    columns = [col[0] for col in cur.description]
-    result = [dict(zip(columns, row)) for row in rows]
-    conn.close()
-    return jsonify(result)
+        OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY
+    """
 
-@app.route('/api/prueba')
-def prueba():
-    conn = get_connection()
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM VENTA")
-    rows = cur.fetchall()
-    columns = [col[0] for col in cur.description]
-    result = [dict(zip(columns, row)) for row in rows]
-    conn.close()
-    return jsonify(result)
+    cur.execute(query, valores)
+    ventas = cur.fetchall()
 
-@app.route('/api/debug')
-def debug():
-    conn = get_connection()
-    cur = conn.cursor()
-    cur.execute("SELECT COUNT(*) FROM VENTA")
-    cantidad = cur.fetchone()[0]
-    conn.close()
-    return f"Total ventas: {cantidad}"
+    # Conteo total
+    valores_count = {k: v for k, v in valores.items() if k not in ['offset', 'limit']}
+    cur.execute(f"""
+        SELECT COUNT(*)
+        FROM Venta V
+        JOIN Cliente CL ON V.ID_Cliente = CL.ID_Cliente
+        JOIN Vendedor VE ON V.ID_Vendedor = VE.ID_Vendedor
+        JOIN PaqueteInternet PI ON V.ID_Paquete = PI.ID_Paquete
+        {where_clause}
+    """, valores_count)
+    total = cur.fetchone()[0]
 
+    cur.close()
+    conn.close()
+
+    total_pages = (total + per_page - 1) // per_page if total > 0 else 1
+
+    return render_template('ventas.html',
+                           ventas=ventas,
+                           page=page,
+                           total_pages=total_pages,
+                           filtro=filtro,
+                           desde=desde,
+                           hasta=hasta,
+                           total=total)
+
+
+#Seccion Rutas
 @app.route('/rutas')
 def rutas_page():
-    return render_template('rutas.html')
+    page = int(request.args.get('page', 1))
+    per_page = 50
+    offset = (page - 1) * per_page
+
+    filtro = request.args.get('buscar', '').strip().lower()
+    condiciones = []
+    valores = {'offset': offset, 'limit': per_page}
+
+    if filtro:
+        palabras = filtro.split()
+        for i, palabra in enumerate(palabras):
+            clave = f'p{i}'
+            condiciones.append(
+                f"(LOWER(R.Zona) LIKE :{clave} OR LOWER(R.Municipio) LIKE :{clave} OR LOWER(V.Nombre) LIKE :{clave} OR LOWER(V.Apellido) LIKE :{clave})"
+            )
+            valores[clave] = f"%{palabra}%"
+
+    where_sql = " AND ".join(condiciones)
+    if where_sql:
+        where_sql = "WHERE " + where_sql
+
+    conn = get_connection()
+    cur = conn.cursor()
+
+    # Consulta principal con JOIN a VENDEDOR
+    cur.execute(f"""
+        SELECT R.ID_Ruta, R.Zona, R.Municipio, R.Departamento,
+               V.Nombre || ' ' || V.Apellido AS Vendedor_Asignado,
+               R.Estado, TO_CHAR(R.Fecha_Creacion, 'YYYY-MM-DD')
+        FROM Ruta R
+        JOIN Vendedor V ON R.ID_Vendedor = V.ID_Vendedor
+        {where_sql}
+        ORDER BY R.ID_Ruta
+        OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY
+    """, valores)
+    rutas = cur.fetchall()
+
+    # Conteo total de resultados
+    filtros_solo = {k: v for k, v in valores.items() if k not in ['offset', 'limit']}
+    cur.execute(f"""
+        SELECT COUNT(*) FROM Ruta R
+        JOIN Vendedor V ON R.ID_Vendedor = V.ID_Vendedor
+        {where_sql}
+    """, filtros_solo)
+    total = cur.fetchone()[0]
+
+    cur.close()
+    conn.close()
+
+    total_pages = (total + per_page - 1) // per_page if total > 0 else 1
+
+    return render_template(
+        'rutas.html',
+        rutas=rutas,
+        page=page,
+        total_pages=total_pages,
+        filtro=filtro,
+        total=total
+    )
+
 
 
 #seccion de Vendedores
@@ -416,6 +598,70 @@ def paquetes_page():
         filtro=filtro,
         total=total
     )
+
+# Seccion tiempo muerto
+@app.route('/tiempomuerto')
+def tiempo_muerto_page():
+    page = int(request.args.get('page', 1))
+    per_page = 50
+    offset = (page - 1) * per_page
+
+    filtro = request.args.get('buscar', '').strip().lower()
+    condiciones = []
+    valores = {'offset': offset, 'limit': per_page}
+
+    if filtro:
+        palabras = filtro.split()
+        for i, palabra in enumerate(palabras):
+            clave = f'p{i}'
+            condiciones.append(
+                f"(LOWER(T.Zona) LIKE :{clave} OR LOWER(T.Municipio) LIKE :{clave} OR LOWER(V.Nombre) LIKE :{clave} OR LOWER(V.Apellido) LIKE :{clave})"
+            )
+            valores[clave] = f"%{palabra}%"
+
+    where_sql = " AND ".join(condiciones)
+    if where_sql:
+        where_sql = "WHERE " + where_sql
+
+    conn = get_connection()
+    cur = conn.cursor()
+
+    # Consulta principal con JOIN a VENDEDOR
+    cur.execute(f"""
+        SELECT T.ID_TiempoMuerto, T.Zona, T.Municipio, T.Departamento,
+               V.Nombre || ' ' || V.Apellido AS Vendedor_Asignado,
+               T.Estado, T.Descripcion, TO_CHAR(T.Fecha, 'YYYY-MM-DD'), T.Duracion_Horas
+        FROM TiempoMuerto T
+        JOIN Vendedor V ON T.ID_Vendedor = V.ID_Vendedor
+        {where_sql}
+        ORDER BY T.ID_TiempoMuerto
+        OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY
+    """, valores)
+    tiempos = cur.fetchall()
+
+    # Conteo total
+    filtros_solo = {k: v for k, v in valores.items() if k not in ['offset', 'limit']}
+    cur.execute(f"""
+        SELECT COUNT(*) FROM TiempoMuerto T
+        JOIN Vendedor V ON T.ID_Vendedor = V.ID_Vendedor
+        {where_sql}
+    """, filtros_solo)
+    total = cur.fetchone()[0]
+
+    cur.close()
+    conn.close()
+
+    total_pages = (total + per_page - 1) // per_page if total > 0 else 1
+
+    return render_template(
+        'tiempomuerto.html',
+        tiempos=tiempos,
+        page=page,
+        total_pages=total_pages,
+        filtro=filtro,
+        total=total
+    )
+
 
 
 if __name__ == '__main__':

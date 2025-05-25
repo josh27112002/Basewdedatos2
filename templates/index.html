@@ -9,10 +9,6 @@
 </head>
 
 <body>
-    <button class="menu-toggle" onclick="document.querySelector('.sidebar').classList.toggle('active')">
-        ☰ Menú
-    </button>
-
     <div class="dashboard-container">
         <!-- Menú lateral izquierdo -->
         <aside class="sidebar">
@@ -28,6 +24,7 @@
                     <li><a href="/paquetes">Paquetes de Internet</a></li>
                     <li><a href="/ventas">Ventas</a></li>
                     <li><a href="/rutas">Rutas</a></li>
+                    <li><a href="/tiempomuerto">Tiempo Muerto</a></li>
                     <li><a href="/reportes">Reportes</a></li>
                 </ul>
             </nav>
@@ -43,28 +40,81 @@
                 <p>Gestiona tus datos de forma eficiente y segura.</p>
             </header>
 
+            <!-- Gráficos de Vendedores -->
             <section class="dashboard-graphs">
                 <h2>Resumen de Vendedores</h2>
-                <div class="charts-container" style="display: flex; gap: 30px; flex-wrap: wrap;">
-                    <div class="chart-box" style="flex: 1; min-width: 300px;">
+                <div class="charts-container">
+                    <div class="chart-box">
                         <canvas id="estadoChart"></canvas>
                     </div>
-                    <div class="chart-box" style="flex: 1; min-width: 300px;">
+                    <div class="chart-box">
                         <canvas id="zonaChart"></canvas>
                     </div>
-                    <div class="chart-box" style="flex: 1; min-width: 300px;">
+                    <div class="chart-box">
                         <canvas id="topZonasChart"></canvas>
                     </div>
                 </div>
             </section>
 
+            <!-- Gráficos de Clientes -->
+            <section class="dashboard-graphs">
+                <h2>Resumen de Clientes</h2>
+                <div class="charts-container">
+                    <div class="chart-box" style="width: 100%; height: 400px;">
+                        <canvas id="lineChartClientes"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- seccion de ventas -->
+            <section class="dashboard-graphs">
+                <h2>Resumen de Ventas</h2>
+                <div class="ventas-container-center">
+                    <div class="chart-box-center">
+                        <canvas id="topVendedoresChart"></canvas>
+                    </div>
+                    <div class="chart-box-center">
+                        <canvas id="paqueteChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-box-full">
+                    <canvas id="ventasMensualesChart"></canvas>
+                </div>
+            </section>
+
+
+            <!-- seccion de rutas -->
+            <section class="dashboard-graphs">
+                <h2>Resumen de Rutas</h2>
+                <div class="charts-container">
+                    <div class="chart-box">
+                        <canvas id="rutasEstadoChart"></canvas>
+                    </div>
+                    <div class="chart-box">
+                        <canvas id="rutasVentasDeptoChart"></canvas>
+                    </div>
+                    <div class="chart-box">
+                        <canvas id="rutasClientesMunicipioChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Scripts -->
             <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
             <script>
                 const estadoData = {{ estado_data| tojson }};
                 const zonaData = {{ zona_data| tojson }};
                 const topZonas = {{ top5_zonas| tojson }};
+                const lineChartData = {{ line_chart_data| tojson }};
+                const topVendedoresData = {{ top_vendedores | tojson }};
+                const paqueteData = {{ ventas_por_paquete | tojson }};
+                const ventasMensuales = {{ ventas_mensuales | tojson }};
+                const rutasEstado = {{ rutas_estado_data | tojson }};
+                const rutasVentasDepto = {{ rutas_ventas_depto_data | tojson }};
+                const rutasClientesMunicipio = {{ rutas_clientes_municipio | tojson }};
 
-                // Gráfico de pastel: Activos vs Inactivos
+
+                // Vendedores Activos vs Inactivos
                 new Chart(document.getElementById('estadoChart'), {
                     type: 'pie',
                     data: {
@@ -84,7 +134,7 @@
                     }
                 });
 
-                // Gráfico horizontal: Vendedores por Zona
+                // Vendedores por Zona
                 new Chart(document.getElementById('zonaChart'), {
                     type: 'bar',
                     data: {
@@ -106,21 +156,12 @@
                             }
                         },
                         scales: {
-                            y: {
-                                ticks: {
-                                    font: {
-                                        size: 14
-                                    }
-                                }
-                            },
-                            x: {
-                                beginAtZero: true
-                            }
+                            x: { beginAtZero: true }
                         }
                     }
                 });
 
-                // Gráfico horizontal: Top 5 Zonas con más Vendedores
+                // Top 5 Zonas con más Vendedores
                 new Chart(document.getElementById('topZonasChart'), {
                     type: 'bar',
                     data: {
@@ -142,21 +183,234 @@
                             }
                         },
                         scales: {
-                            y: {
+                            x: { beginAtZero: true }
+                        }
+                    }
+                });
+
+                // Línea - Top municipios con clientes
+                new Chart(document.getElementById('lineChartClientes'), {
+                    type: 'line',
+                    data: {
+                        labels: lineChartData.labels,
+                        datasets: lineChartData.datasets.map(dataset => ({
+                            ...dataset,
+                            fill: false,
+                            borderColor: `hsl(${Math.random() * 360}, 70%, 50%)`,
+                            tension: 0.3,
+                            pointRadius: 3,
+                            pointHoverRadius: 5
+                        }))
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Top 5 de Municipios con más Clientes Registrados por Mes'
+                            }
+                        },
+                        scales: {
+                            y: { beginAtZero: true }
+                        }
+                    }
+                });
+
+                // Top 5 Vendedores
+                new Chart(document.getElementById('topVendedoresChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: topVendedoresData.map(v => v[0]),
+                        datasets: [{
+                            label: 'Ventas realizadas',
+                            data: topVendedoresData.map(v => v[1]),
+                            backgroundColor: '#28a745'
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Top 5 Vendedores con más Ventas'
+                            }
+                        },
+                        scales: {
+                            x: {
+                                beginAtZero: true,
                                 ticks: {
                                     font: {
                                         size: 14
                                     }
                                 }
                             },
+                            y: {
+                                ticks: {
+                                    font: {
+                                        size: 14
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+
+
+                // Ventas por paquete
+                new Chart(document.getElementById('paqueteChart'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: paqueteData.map(p => p[0]),
+                        datasets: [{
+                            data: paqueteData.map(p => p[1]),
+                            backgroundColor: ['#007bff', '#ffc107', '#28a745', '#dc3545', '#17a2b8', '#6610f2', '#fd7e14', '#6f42c1']
+                        }]
+                    },
+                    options: {
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Distribución de Ventas por Paquete de Internet'
+                            }
+                        }
+                    }
+                });
+
+                // Ventas mensuales
+                new Chart(document.getElementById('ventasMensualesChart'), {
+                    type: 'line',
+                    data: {
+                        labels: ventasMensuales.map(v => v[0]),
+                        datasets: [{
+                            label: 'Ventas por Mes',
+                            data: ventasMensuales.map(v => v[1]),
+                            borderColor: '#007bff',
+                            backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                            fill: true,
+                            tension: 0.3
+                        }]
+                    },
+                    options: {
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Tendencia de Ventas Mensuales'
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+
+                // Rutas - Estado (Activas/Inactivas)
+                new Chart(document.getElementById('rutasEstadoChart'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: Object.keys(rutasEstado),
+                        datasets: [{
+                            data: Object.values(rutasEstado),
+                            backgroundColor: ['#36A2EB', '#FF6384']
+                        }]
+                    },
+                    options: {
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Estado de Rutas (Activas vs Inactivas)'
+                            }
+                        }
+                    }
+                });
+
+                // Rutas vs Ventas por Departamento (Stacked Bar)
+                new Chart(document.getElementById('rutasVentasDeptoChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: rutasVentasDepto.departamentos,
+                        datasets: [
+                            {
+                                label: 'Rutas',
+                                data: rutasVentasDepto.rutas,
+                                backgroundColor: '#42A5F5'
+                            },
+                            {
+                                label: 'Ventas',
+                                data: rutasVentasDepto.ventas,
+                                backgroundColor: '#66BB6A'
+                            }
+                        ]
+                    },
+                    options: {
+                        indexAxis: 'y',  // HORIZONTAL
+                        maintainAspectRatio: false,
+                        responsive: true,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Rutas vs Ventas por Departamento'
+                            },
+                            legend: {
+                                position: 'top'
+                            }
+                        },
+                        scales: {
                             x: {
                                 beginAtZero: true
                             }
                         }
                     }
                 });
-            </script>
 
+
+
+                // Rutas vs Clientes por Municipio (Scatter Plot)
+                // Rutas vs Clientes por Municipio (Gráfico de Barras Horizontal)
+                new Chart(document.getElementById('rutasClientesMunicipioChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: rutasClientesMunicipio.municipios,
+                        datasets: [
+                            {
+                                label: 'Rutas',
+                                data: rutasClientesMunicipio.rutas,
+                                backgroundColor: '#42A5F5'
+                            },
+                            {
+                                label: 'Clientes',
+                                data: rutasClientesMunicipio.clientes,
+                                backgroundColor: '#FFA726'
+                            }
+                        ]
+                    },
+                    options: {
+                        indexAxis: 'y', // HORIZONTAL
+                        maintainAspectRatio: false,
+                        responsive: true,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Comparación de Rutas y Clientes por Municipio'
+                            },
+                            legend: {
+                                position: 'top'
+                            }
+                        },
+                        scales: {
+                            x: {
+                                beginAtZero: true
+                            }
+                        }
+                    }
+                });
+
+
+            </script>
         </main>
     </div>
 </body>

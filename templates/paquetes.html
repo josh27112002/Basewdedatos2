@@ -4,54 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Paquetes de Internet</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <style>
-        table {
-            width: 95%;
-            margin: 20px auto;
-            border-collapse: collapse;
-        }
-
-        th,
-        td {
-            padding: 10px;
-            border: 1px solid #ccc;
-            text-align: center;
-        }
-
-        th {
-            background-color: #f5f5f5;
-        }
-
-        .pagination {
-            text-align: center;
-            margin: 20px;
-        }
-
-        .pagination a {
-            margin: 0 5px;
-            text-decoration: none;
-            padding: 6px 12px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            color: #333;
-        }
-
-        .pagination span {
-            padding: 6px 12px;
-            font-weight: bold;
-        }
-
-        .search-bar {
-            text-align: center;
-            margin: 20px;
-        }
-
-        .search-bar input[type="text"] {
-            padding: 6px;
-            width: 300px;
-        }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='paquetes.css') }}">
 </head>
 
 <body>
@@ -70,6 +23,7 @@
                     <li><a href="/paquetes" class="active">Paquetes de Internet</a></li>
                     <li><a href="/ventas">Ventas</a></li>
                     <li><a href="/rutas">Rutas</a></li>
+                    <li><a href="/tiempomuerto">Tiempo Muerto</a></li>
                     <li><a href="/reportes">Reportes</a></li>
                 </ul>
             </nav>
@@ -83,7 +37,7 @@
             <header class="dashboard-header">
                 <h1>Paquetes de Internet</h1>
                 <p>Consulta y busca los paquetes disponibles.</p>
-                <p style="text-align: center; font-weight: bold;">Resultados encontrados: {{ total }}</p>
+                <p class="resultados">Resultados encontrados: {{ total }}</p>
             </header>
 
             <!-- Buscador -->
@@ -95,38 +49,40 @@
             </div>
 
             <!-- Tabla -->
-            <table>
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Nombre</th>
-                        <th>Velocidad (Mbps)</th>
-                        <th>Precio (Q)</th>
-                        <th>Descripción</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for p in paquetes %}
-                    <tr>
-                        <td>{{ p[0] }}</td>
-                        <td>{{ p[1] }}</td>
-                        <td>{{ p[2] }}</td>
-                        <td>{{ p[3] }}</td>
-                        <td>{{ p[4] }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre</th>
+                            <th>Velocidad (Mbps)</th>
+                            <th>Precio (Q)</th>
+                            <th>Descripción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in paquetes %}
+                        <tr>
+                            <td>{{ p[0] }}</td>
+                            <td>{{ p[1] }}</td>
+                            <td>{{ p[2] }}</td>
+                            <td>{{ p[3] }}</td>
+                            <td>{{ p[4] }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
 
             <!-- Paginación -->
             <div class="pagination">
                 {% if page > 1 %}
-                <a href="{{ url_for('paquetes_page', page=page-1, buscar=filtro) }}">← Anterior</a>
+                <a href="{{ url_for('paquetes_page', page=page-1, buscar=filtro) }}">&larr; Anterior</a>
                 {% endif %}
                 <span>Página {{ page }} de {{ total_pages }}</span>
-                {% if page < total_pages %} <a href="{{ url_for('paquetes_page', page=page+1, buscar=filtro) }}">
-                    Siguiente →</a>
-                    {% endif %}
+                {% if page < total_pages %}
+                <a href="{{ url_for('paquetes_page', page=page+1, buscar=filtro) }}">Siguiente &rarr;</a>
+                {% endif %}
             </div>
         </main>
     </div>
